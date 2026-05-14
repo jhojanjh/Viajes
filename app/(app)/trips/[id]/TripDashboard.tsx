@@ -29,6 +29,11 @@ export function TripDashboard({ trip: initialTrip, currentUserId }: { trip: any;
   const searchParams = useSearchParams();
   const [trip, setTrip] = useState(initialTrip);
   const [tab, setTab] = useState<Tab>((searchParams.get('tab') as Tab) || 'resumen');
+
+  useEffect(() => {
+    const t = (searchParams.get('tab') as Tab) || 'resumen';
+    setTab(t);
+  }, [searchParams]);
   const [inviteOpen, setInviteOpen] = useState(false);
 
   // ─── Countdown ───
@@ -141,21 +146,6 @@ export function TripDashboard({ trip: initialTrip, currentUserId }: { trip: any;
         ))}
       </div>
 
-      {/* Mobile tab selector */}
-      <div className="md:hidden mb-4">
-        <select
-          value={tab}
-          onChange={e => setTab(e.target.value as Tab)}
-          className="w-full px-4 py-3 rounded-xl bg-surface dark:bg-surface-dark border border-bg-alt dark:border-ink-soft/20 font-semibold"
-        >
-          <option value="resumen">Resumen</option>
-          <option value="gastos">Gastos</option>
-          <option value="itinerario">Itinerario</option>
-          <option value="equipaje">Equipaje</option>
-          <option value="documentos">Documentos</option>
-          <option value="chat">Chat</option>
-        </select>
-      </div>
 
       {/* Content */}
       {tab === 'resumen' && (
