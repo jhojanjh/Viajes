@@ -110,9 +110,9 @@ export function AppShell({ children, tripId }: { children: React.ReactNode; trip
       {/* Mobile bottom nav */}
       {tripId && (
         <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-surface/95 dark:bg-surface-dark/95 backdrop-blur border-t border-bg-alt dark:border-ink-soft/20 flex items-center justify-around py-2 pb-safe">
-          {mobileNav.map(s => {
+          {mobileNav.map((s: { href: string; label: string; icon: any; tab: string }) => {
             const Icon = s.icon;
-            const active = 'tab' in s ? currentTab === s.tab : pathname === s.href;
+            const active = currentTab === s.tab;
             return (
               <Link key={s.href} href={s.href} className={`flex flex-col items-center gap-0.5 px-3 py-1.5 ${active ? 'text-coral' : 'text-ink-muted'}`}>
                 <Icon size={20} strokeWidth={active ? 2.4 : 2} />
