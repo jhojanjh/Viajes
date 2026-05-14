@@ -34,11 +34,6 @@ export function AppShell({ children, tripId }: { children: React.ReactNode; trip
 
   const sections = tripId ? [
     { href: `/trips/${tripId}`, label: 'Resumen', icon: Home, tab: 'resumen' },
-    { href: `/trips/${tripId}?tab=gastos`, label: 'Gastos', icon: Wallet, tab: 'gastos' },
-    { href: `/trips/${tripId}?tab=itinerario`, label: 'Itinerario', icon: Calendar, tab: 'itinerario' },
-    { href: `/trips/${tripId}?tab=equipaje`, label: 'Equipaje', icon: ListChecks, tab: 'equipaje' },
-    { href: `/trips/${tripId}?tab=documentos`, label: 'Documentos', icon: FileText, tab: 'documentos' },
-    { href: `/trips/${tripId}?tab=chat`, label: 'Chat', icon: MessageCircle, tab: 'chat' },
   ] : [
     { href: '/trips', label: 'Mis viajes', icon: Compass, match: (p:string) => p.startsWith('/trips') },
   ];
