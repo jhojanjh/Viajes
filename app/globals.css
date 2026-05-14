@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body {
+    @apply bg-bg text-ink antialiased;
+  }
+  .dark html, .dark body {
+    @apply bg-bg-dark text-ink-dark;
+  }
+  * { -webkit-tap-highlight-color: transparent; }
+}
+
+@layer components {
+  .card { @apply bg-surface dark:bg-surface-dark border border-bg-alt dark:border-ink-soft/20 rounded-2xl; }
+  .btn-primary { @apply bg-ink dark:bg-ink-dark text-bg dark:text-bg-dark px-4 py-2.5 rounded-xl font-semibold text-sm hover:opacity-90 transition; }
+  .btn-coral { @apply bg-coral text-white px-4 py-2.5 rounded-xl font-semibold text-sm hover:opacity-90 transition; }
+  .btn-ghost { @apply px-4 py-2.5 rounded-xl font-medium text-sm hover:bg-bg-alt dark:hover:bg-bg-dark-alt transition; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
+.dark ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
