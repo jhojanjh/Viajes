@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import {
   Compass, Home, Wallet, Calendar, ListChecks, FileText, MessageCircle,
@@ -12,7 +12,8 @@ import { Avatar } from './Avatar';
 
 export function AppShell({ children, tripId }: { children: React.ReactNode; tripId?: string }) {
   const pathname = usePathname();
-  const router = useRouter();
+  const searchParams = useSearchParams();
+  const currentTab = searchParams.get('tab') || 'resumen';
   const { data: session } = useSession();
   const [dark, setDark] = useState(false);
 
@@ -32,12 +33,12 @@ export function AppShell({ children, tripId }: { children: React.ReactNode; trip
   };
 
   const sections = tripId ? [
-    { href: `/trips/${tripId}`, label: 'Resumen', icon: Home, match: (p:string) => p === `/trips/${tripId}` },
-    { href: `/trips/${tripId}/expenses`, label: 'Gastos', icon: Wallet },
-    { href: `/trips/${tripId}/itinerary`, label: 'Itinerario', icon: Calendar },
-    { href: `/trips/${tripId}/checklist`, label: 'Equipaje', icon: ListChecks },
-    { href: `/trips/${tripId}/documents`, label: 'Documentos', icon: FileText },
-    { href: `/trips/${tripId}/chat`, label: 'Chat', icon: MessageCircle },
+    { href: `/trips/${tripId}`, label: 'Resumen', icon: Home, tab: 'resumen' },
+    { href: `/trips/${tripId}?tab=gastos`, label: 'Gastos', icon: Wallet, tab: 'gastos' },
+    { href: `/trips/${tripId}?tab=itinerario`, label: 'Itinerario', icon: Calendar, tab: 'itinerario' },
+    { href: `/trips/${tripId}?tab=equipaje`, label: 'Equipaje', icon: ListChecks, tab: 'equipaje' },
+    { href: `/trips/${tripId}?tab=documentos`, label: 'Documentos', icon: FileText, tab: 'documentos' },
+    { href: `/trips/${tripId}?tab=chat`, label: 'Chat', icon: MessageCircle, tab: 'chat' },
   ] : [
     { href: '/trips', label: 'Mis viajes', icon: Compass, match: (p:string) => p.startsWith('/trips') },
   ];
@@ -64,7 +65,7 @@ export function AppShell({ children, tripId }: { children: React.ReactNode; trip
         <nav className="flex flex-col gap-1">
           {sections.map(s => {
             const Icon = s.icon;
-            const active = s.match ? s.match(pathname) : pathname === s.href;
+            const active = 'tab' in s ? currentTab === s.tab : pathname === s.href;
             return (
               <Link
                 key={s.href}
@@ -108,7 +109,7 @@ export function AppShell({ children, tripId }: { children: React.ReactNode; trip
         <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-surface/95 dark:bg-surface-dark/95 backdrop-blur border-t border-bg-alt dark:border-ink-soft/20 flex items-center justify-around py-2 pb-safe">
           {sections.slice(0, 5).map(s => {
             const Icon = s.icon;
-            const active = s.match ? s.match(pathname) : pathname === s.href;
+            const active = 'tab' in s ? currentTab === s.tab : pathname === s.href;
             return (
               <Link key={s.href} href={s.href} className={`flex flex-col items-center gap-0.5 px-3 py-1.5 ${active ? 'text-coral' : 'text-ink-muted'}`}>
                 <Icon size={20} strokeWidth={active ? 2.4 : 2} />

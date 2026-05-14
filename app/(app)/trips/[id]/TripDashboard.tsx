@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import {
   Plus, Sparkles, Calendar, Users, Wallet, MapPin, TrendingUp, TrendingDown,
@@ -25,8 +26,9 @@ type Tab = 'resumen' | 'gastos' | 'itinerario' | 'equipaje' | 'documentos' | 'ch
 
 export function TripDashboard({ trip: initialTrip, currentUserId }: { trip: any; currentUserId: string }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [trip, setTrip] = useState(initialTrip);
-  const [tab, setTab] = useState<Tab>('resumen');
+  const [tab, setTab] = useState<Tab>((searchParams.get('tab') as Tab) || 'resumen');
   const [inviteOpen, setInviteOpen] = useState(false);
 
   // ─── Countdown ───
