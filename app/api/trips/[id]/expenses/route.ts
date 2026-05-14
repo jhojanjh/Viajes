@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getToken } from 'next-auth/jwt';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
@@ -15,11 +14,11 @@ const createSchema = z.object({
 });
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const member = await prisma.tripMember.findUnique({
-    where: { tripId_userId: { tripId: params.id, userId: session.user.id } },
+    where: { tripId_userId: { tripId: params.id, userId: token.id as string } },
   });
   if (!member) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
@@ -29,7 +28,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const expense = await prisma.expense.create({
     data: {
       tripId: params.id,
-      payerId: session.user.id,
+      payerId: token.id as string,
       title: body.title,
       amount: body.amount,
       currency: body.currency,
@@ -47,12 +46,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { expenseId } = await req.json();
   const expense = await prisma.expense.findUnique({ where: { id: expenseId } });
-  if (!expense || expense.payerId !== session.user.id)
+  if (!expense || expense.payerId !== (token.id as string))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   await prisma.expense.delete({ where: { id: expenseId } });

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getToken } from 'next-auth/jwt';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
@@ -15,11 +14,11 @@ const createSchema = z.object({
 });
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const member = await prisma.tripMember.findUnique({
-    where: { tripId_userId: { tripId: params.id, userId: session.user.id } },
+    where: { tripId_userId: { tripId: params.id, userId: token.id as string } },
   });
   if (!member) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
@@ -49,8 +48,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { eventId } = await req.json();
   await prisma.itineraryEvent.delete({ where: { id: eventId } });
