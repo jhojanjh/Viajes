@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getToken } from 'next-auth/jwt';
+import { getAuth } from '@/lib/getAuth';
 import { prisma } from '@/lib/prisma';
 import { tripCode } from '@/lib/utils';
 import { z } from 'zod';
 
-export async function GET(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+export async function GET() {
+  const token = await getAuth();
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const trips = await prisma.trip.findMany({
@@ -30,7 +30,7 @@ const createSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const token = await getAuth();
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = createSchema.parse(await req.json());

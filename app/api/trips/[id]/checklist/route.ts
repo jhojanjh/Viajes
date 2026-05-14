@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getToken } from 'next-auth/jwt';
+import { getAuth } from '@/lib/getAuth';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const token = await getAuth();
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { text, assigneeId } = await req.json();
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const token = await getAuth();
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { itemId, done } = await req.json();
@@ -27,7 +27,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const token = await getAuth();
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { itemId } = await req.json();

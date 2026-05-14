@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getToken } from 'next-auth/jwt';
+import { getAuth } from '@/lib/getAuth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
@@ -14,7 +14,7 @@ const createSchema = z.object({
 });
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const token = await getAuth();
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const member = await prisma.tripMember.findUnique({
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       notes: body.notes,
       occurredAt: body.occurredAt ? new Date(body.occurredAt) : new Date(),
       shares: {
-        create: body.splitWith.map(userId => ({ userId, amount: sharePerPerson })),
+        create: body.splitWith.map((userId: string) => ({ userId, amount: sharePerPerson })),
       },
     },
     include: { payer: true, shares: { include: { user: true } } },
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const token = await getAuth();
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { expenseId } = await req.json();

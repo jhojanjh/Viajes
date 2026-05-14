@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getToken } from 'next-auth/jwt';
+import { getAuth } from '@/lib/getAuth';
 import { prisma } from '@/lib/prisma';
 
 async function ensureMember(tripId: string, userId: string) {
   return prisma.tripMember.findUnique({ where: { tripId_userId: { tripId, userId } } });
 }
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+  const token = await getAuth();
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const member = await ensureMember(params.id, token.id as string);
@@ -27,8 +27,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   return NextResponse.json(trip);
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+  const token = await getAuth();
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const member = await ensureMember(params.id, token.id as string);
