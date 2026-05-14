@@ -38,6 +38,14 @@ export function AppShell({ children, tripId }: { children: React.ReactNode; trip
     { href: '/trips', label: 'Mis viajes', icon: Compass, match: (p:string) => p.startsWith('/trips') },
   ];
 
+  const mobileNav = tripId ? [
+    { href: `/trips/${tripId}`, label: 'Resumen', icon: Home, tab: 'resumen' },
+    { href: `/trips/${tripId}?tab=gastos`, label: 'Gastos', icon: Wallet, tab: 'gastos' },
+    { href: `/trips/${tripId}?tab=itinerario`, label: 'Itinerario', icon: Calendar, tab: 'itinerario' },
+    { href: `/trips/${tripId}?tab=equipaje`, label: 'Equipaje', icon: ListChecks, tab: 'equipaje' },
+    { href: `/trips/${tripId}?tab=chat`, label: 'Chat', icon: MessageCircle, tab: 'chat' },
+  ] : [];
+
   return (
     <div className="flex min-h-screen font-sans">
       <aside className="hidden md:flex w-64 flex-col bg-bg-alt dark:bg-bg-dark-alt border-r border-bg-alt dark:border-ink-soft/20 sticky top-0 h-screen p-4">
@@ -102,7 +110,7 @@ export function AppShell({ children, tripId }: { children: React.ReactNode; trip
       {/* Mobile bottom nav */}
       {tripId && (
         <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-surface/95 dark:bg-surface-dark/95 backdrop-blur border-t border-bg-alt dark:border-ink-soft/20 flex items-center justify-around py-2 pb-safe">
-          {sections.slice(0, 5).map(s => {
+          {mobileNav.map(s => {
             const Icon = s.icon;
             const active = 'tab' in s ? currentTab === s.tab : pathname === s.href;
             return (
