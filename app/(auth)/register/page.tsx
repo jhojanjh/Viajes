@@ -62,8 +62,8 @@ export default function RegisterPage() {
               <Compass size={24} className="text-white" strokeWidth={2.5} />
             </div>
             <div>
-              <div className="font-display text-2xl font-bold tracking-tight">TripSync</div>
-              <div className="text-[10px] uppercase tracking-widest text-ink-muted">Travel together</div>
+              <div className="font-display text-2xl font-bold tracking-tight">Viajesito ❤️</div>
+              <div className="text-[10px] uppercase tracking-widest text-ink-muted">Viaja con amigos</div>
             </div>
           </div>
 

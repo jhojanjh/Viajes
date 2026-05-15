@@ -2,7 +2,7 @@ import './globals.css';
 import { Providers } from '@/components/Providers';
 
 export const metadata = {
-  title: 'TripSync — Viaja con amigos',
+  title: 'Viajesito ❤️ — Viaja con amigos',
   description: 'Gestiona viajes, gastos e itinerarios con tus amigos',
 };
 

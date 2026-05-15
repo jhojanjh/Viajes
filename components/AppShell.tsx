@@ -56,7 +56,7 @@ export function AppShell({ children, tripId }: { children: React.ReactNode; trip
           <Menu size={22} />
         </button>
         <div className="flex-1 flex justify-center">
-          <span className="font-display font-bold text-base">TripSync</span>
+          <span className="font-display font-bold text-base">Viajesito ❤️</span>
         </div>
         <div className="w-10" />
       </header>
@@ -75,8 +75,8 @@ export function AppShell({ children, tripId }: { children: React.ReactNode; trip
                 <Compass size={18} className="text-white" strokeWidth={2.5} />
               </div>
               <div className="flex-1">
-                <div className="font-display font-bold">TripSync</div>
-                <div className="text-[10px] text-ink-muted uppercase tracking-widest">Travel together</div>
+                <div className="font-display font-bold">Viajesito ❤️</div>
+                <div className="text-[10px] text-ink-muted uppercase tracking-widest">Viaja con amigos</div>
               </div>
               <button onClick={() => setMobileMenuOpen(false)} className="text-ink-muted p-1">
                 <X size={20} />
@@ -141,8 +141,8 @@ export function AppShell({ children, tripId }: { children: React.ReactNode; trip
             <Compass size={18} className="text-white" strokeWidth={2.5} />
           </div>
           <div>
-            <div className="font-display text-lg font-bold tracking-tight">TripSync</div>
-            <div className="text-[10px] uppercase tracking-widest text-ink-muted">Travel together</div>
+            <div className="font-display text-lg font-bold tracking-tight">Viajesito ❤️</div>
+            <div className="text-[10px] uppercase tracking-widest text-ink-muted">Viaja con amigos</div>
           </div>
         </Link>
 
