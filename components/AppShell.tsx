@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import {
   Compass, Home, Wallet, Calendar, ListChecks, FileText, MessageCircle,
-  Sun, Moon, LogOut, ChevronLeft, Bell,
+  Sun, Moon, LogOut, ChevronLeft, Bell, ArrowLeftRight,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Avatar } from './Avatar';
@@ -88,9 +88,14 @@ export function AppShell({ children, tripId }: { children: React.ReactNode; trip
         </nav>
 
         <div className="mt-auto pt-4 border-t border-ink-muted/15 flex flex-col gap-1">
+          {tripId && (
+            <Link href="/trips" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-ink-soft dark:text-ink-dark-soft hover:bg-surface/50 dark:hover:bg-surface-dark/50">
+              <ArrowLeftRight size={17} /> Cambiar viaje
+            </Link>
+          )}
           <button onClick={toggle} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-ink-soft dark:text-ink-dark-soft hover:bg-surface/50 dark:hover:bg-surface-dark/50">
             {dark ? <Sun size={17} /> : <Moon size={17} />}
-            {dark ? 'Modo claro' : 'Modo oscuro'}
+            {dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
           </button>
           {session?.user && (
             <div className="flex items-center gap-3 px-2 py-2">

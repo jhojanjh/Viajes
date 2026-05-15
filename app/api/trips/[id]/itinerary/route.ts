@@ -47,6 +47,17 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   return NextResponse.json(event);
 }
 
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+  const token = await getAuth();
+  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { eventId, time, title, description, category, location, mapsLink } = await req.json();
+  const event = await prisma.itineraryEvent.update({
+    where: { id: eventId },
+    data: { time, title, description, category, location, mapsLink },
+  });
+  return NextResponse.json(event);
+}
+
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   const token = await getAuth();
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -7,7 +7,7 @@ import {
   Plus, Sparkles, Calendar, Users, Wallet, MapPin, TrendingUp, TrendingDown,
   Hotel, Car, Utensils, Mountain, ShoppingBag, Coffee, Ticket, Camera, Waves,
   Plane, FileText, ListChecks, MessageCircle, Send, Share2, Copy, Check, X,
-  MoreHorizontal, Trash2, Clock, Download, Eye, Upload, Sun, Briefcase,
+  MoreHorizontal, Trash2, Clock, Download, Eye, Upload, Sun, Briefcase, Pencil,
 } from 'lucide-react';
 import { Avatar } from '@/components/Avatar';
 import { fmt, categories, colorFromId } from '@/lib/utils';
@@ -198,6 +198,25 @@ function ResumenTab({ trip, totalSpent, myBalance, checklistDone, currentUserId 
         <StatCard label="Tu balance" value={`${myBalance >= 0 ? '+' : ''}${fmt.money(myBalance, trip.baseCurrency)}`} sub={myBalance > 0 ? 'Te deben' : myBalance < 0 ? 'Debes' : 'Al día'} color={myBalance >= 0 ? '#2BB089' : '#FF6B47'} icon={myBalance >= 0 ? TrendingUp : TrendingDown} accent />
         <StatCard label="Actividades" value={String(trip.itineraryDays.reduce((s:number,d:any) => s + d.events.length, 0))} sub={`${trip.itineraryDays.length} días`} color="#4A8FE7" icon={MapPin} />
         <StatCard label="Equipaje" value={`${checklistDone}/${trip.checklistItems.length}`} sub="Items listos" color="#F5B82E" icon={ListChecks} />
+      </div>
+
+      <div className="card p-5">
+        <h3 className="font-display text-lg font-bold tracking-tight mb-1">Viajeros</h3>
+        <p className="text-xs text-ink-muted mb-4">{trip.members.length} participantes</p>
+        <div className="space-y-3">
+          {trip.members.map((m: any) => (
+            <div key={m.id} className="flex items-center gap-3">
+              <Avatar user={m.user} size={36} />
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold truncate">{m.user.name}</div>
+                <div className="text-xs text-ink-muted truncate">{m.user.email}</div>
+              </div>
+              {m.role === 'ADMIN' && (
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full bg-coral/10 text-coral">Organizador</span>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -412,8 +431,13 @@ function BalancesCard({ balances, members, currency }: any) {
             <div key={b.userId} className="flex items-center gap-3">
               <Avatar user={user} size={28} />
               <div className="flex-1 text-sm font-medium truncate">{user.name?.split(' ')[0]}</div>
-              <div className={`font-display font-bold text-sm ${b.amount > 0 ? 'text-mint' : b.amount < 0 ? 'text-coral' : 'text-ink-muted'}`}>
-                {b.amount > 0 ? '+' : ''}{fmt.money(b.amount, currency)}
+              <div className="text-right">
+                <div className={`font-display font-bold text-sm ${b.amount > 0 ? 'text-mint' : b.amount < 0 ? 'text-coral' : 'text-ink-muted'}`}>
+                  {b.amount > 0 ? '+' : ''}{fmt.money(b.amount, currency)}
+                </div>
+                <div className={`text-[10px] font-semibold ${b.amount > 0 ? 'text-mint' : b.amount < 0 ? 'text-coral' : 'text-ink-muted'}`}>
+                  {b.amount > 0 ? 'te deben' : b.amount < 0 ? 'debes pagar' : 'Al día'}
+                </div>
               </div>
             </div>
           );
@@ -485,6 +509,7 @@ function ExpenseModal({ trip, onClose, onSaved }: any) {
 
 function ItinerarioTab({ trip, onChange }: any) {
   const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<any>(null);
 
   const remove = async (eventId: string) => {
     if (!confirm('¿Eliminar?')) return;
@@ -538,6 +563,9 @@ function ItinerarioTab({ trip, onChange }: any) {
                           </a>
                         )}
                       </div>
+                      <button onClick={() => setEditing(ev)} className="text-ink-muted hover:text-sky">
+                        <Pencil size={14} />
+                      </button>
                       <button onClick={() => remove(ev.id)} className="text-ink-muted hover:text-coral">
                         <Trash2 size={14} />
                       </button>
@@ -551,34 +579,43 @@ function ItinerarioTab({ trip, onChange }: any) {
       )}
 
       {modalOpen && <EventModal trip={trip} onClose={() => setModalOpen(false)} onSaved={() => { setModalOpen(false); onChange(); }} />}
+      {editing && <EventModal trip={trip} initialEvent={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); onChange(); }} />}
     </div>
   );
 }
 
-function EventModal({ trip, onClose, onSaved }: any) {
-  const [date, setDate] = useState(trip.startDate.slice(0, 10));
-  const [time, setTime] = useState('09:00');
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('activity');
-  const [location, setLocation] = useState('');
+function EventModal({ trip, onClose, onSaved, initialEvent }: any) {
+  const [date, setDate] = useState(initialEvent?.date ? new Date(initialEvent.date).toISOString().slice(0, 10) : trip.startDate.slice(0, 10));
+  const [time, setTime] = useState(initialEvent?.time || '09:00');
+  const [title, setTitle] = useState(initialEvent?.title || '');
+  const [description, setDescription] = useState(initialEvent?.description || '');
+  const [category, setCategory] = useState(initialEvent?.category || 'activity');
+  const [location, setLocation] = useState(initialEvent?.location || '');
   const [loading, setLoading] = useState(false);
 
   const submit = async () => {
     if (!title || !date || !time) return;
     setLoading(true);
     const mapsLink = location ? `https://maps.google.com/?q=${encodeURIComponent(location)}` : undefined;
-    await fetch(`/api/trips/${trip.id}/itinerary`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date, time, title, description, category, location, mapsLink }),
-    });
+    if (initialEvent) {
+      await fetch(`/api/trips/${trip.id}/itinerary`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId: initialEvent.id, time, title, description, category, location, mapsLink }),
+      });
+    } else {
+      await fetch(`/api/trips/${trip.id}/itinerary`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date, time, title, description, category, location, mapsLink }),
+      });
+    }
     setLoading(false);
     onSaved();
   };
 
   return (
-    <Modal onClose={onClose} title="Nueva actividad">
+    <Modal onClose={onClose} title={initialEvent ? 'Editar actividad' : 'Nueva actividad'}>
       <div className="space-y-3">
         <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Visita al volcán" className="w-full px-4 py-3 rounded-xl bg-bg dark:bg-bg-dark-alt border border-bg-alt dark:border-ink-soft/20" />
         <div className="grid grid-cols-2 gap-2">
@@ -603,6 +640,11 @@ function EventModal({ trip, onClose, onSaved }: any) {
 function EquipajeTab({ trip, onChange }: any) {
   const [text, setText] = useState('');
   const [assignee, setAssignee] = useState<string>('');
+
+  useEffect(() => {
+    const t = setInterval(onChange, 5000);
+    return () => clearInterval(t);
+  }, []);
 
   const add = async () => {
     if (!text.trim()) return;
@@ -652,7 +694,7 @@ function EquipajeTab({ trip, onChange }: any) {
         </div>
       </div>
 
-      <div className="card p-3 flex gap-2">
+      <div className="card p-4 flex gap-2 sticky bottom-20 md:bottom-4 z-10">
         <input
           value={text}
           onChange={e => setText(e.target.value)}
@@ -664,7 +706,7 @@ function EquipajeTab({ trip, onChange }: any) {
           <option value="">Todos</option>
           {trip.members.map((m: any) => <option key={m.userId} value={m.userId}>{m.user.name?.split(' ')[0]}</option>)}
         </select>
-        <button onClick={add} className="btn-coral px-4 py-2">
+        <button onClick={add} className="btn-coral px-5 py-3 text-base font-bold">
           <Plus size={15} strokeWidth={2.5} />
         </button>
       </div>
