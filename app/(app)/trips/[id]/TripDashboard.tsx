@@ -34,6 +34,11 @@ export function TripDashboard({ trip: initialTrip, currentUserId }: { trip: any;
     const t = (searchParams.get('tab') as Tab) || 'resumen';
     setTab(t);
   }, [searchParams]);
+
+  useEffect(() => {
+    setTrip(initialTrip);
+  }, [initialTrip]);
+
   const [inviteOpen, setInviteOpen] = useState(false);
 
   // ─── Countdown ───
@@ -347,23 +352,38 @@ function GastosTab({ trip, currentUserId, onChange }: any) {
               const Icon = categoryIcons[e.category] || ShoppingBag;
               const color = categories[e.category as keyof typeof categories]?.color || '#888';
               const share = e.shares.find((s: any) => s.userId === currentUserId)?.amount || 0;
+              const iPaid = e.payerId === currentUserId;
               return (
-                <div key={e.id} className={`flex items-center gap-3 p-4 ${i < trip.expenses.length - 1 ? 'border-b border-bg-alt dark:border-ink-soft/15' : ''}`}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: color + '20', color }}>
+                <div key={e.id} className={`flex items-start gap-3 p-4 ${i < trip.expenses.length - 1 ? 'border-b border-bg-alt dark:border-ink-soft/15' : ''} ${iPaid ? 'bg-mint/5' : ''}`}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: color + '20', color }}>
                     <Icon size={17} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm truncate">{e.title}</div>
-                    <div className="text-xs text-ink-muted truncate">
-                      Pagó <span className="font-semibold text-ink-soft dark:text-ink-dark-soft">{e.payer.name?.split(' ')[0]}</span> · {fmt.dateShort(e.occurredAt)}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div className="font-semibold text-sm truncate">{e.title}</div>
+                      {iPaid && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-mint/15 text-mint uppercase tracking-wide flex-shrink-0">Tú pagaste</span>
+                      )}
                     </div>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <Avatar user={e.payer} size={16} />
+                      <span className="text-xs text-ink-muted">
+                        {iPaid ? 'Tú' : e.payer.name?.split(' ')[0]} · {fmt.dateShort(e.occurredAt)}
+                      </span>
+                    </div>
+                    {share > 0 && (
+                      <div className="text-xs mt-1">
+                        <span className="text-ink-muted">Tu parte: </span>
+                        <span className={`font-semibold ${iPaid ? 'text-mint' : 'text-coral'}`}>{fmt.money(share, trip.baseCurrency)}</span>
+                      </div>
+                    )}
                   </div>
-                  <div className="text-right">
+                  <div className="text-right flex-shrink-0">
                     <div className="font-display font-bold text-base">{fmt.money(e.amount, e.currency)}</div>
-                    <div className="text-[10px] text-ink-muted">tu parte: {fmt.money(share, trip.baseCurrency)}</div>
+                    <div className="text-[10px] text-ink-muted">{e.shares.length} personas</div>
                   </div>
-                  {e.payerId === currentUserId && (
-                    <button onClick={() => remove(e.id)} className="text-ink-muted hover:text-coral p-1">
+                  {iPaid && (
+                    <button onClick={() => remove(e.id)} className="text-ink-muted hover:text-coral p-1 mt-0.5 flex-shrink-0">
                       <Trash2 size={14} />
                     </button>
                   )}
@@ -420,28 +440,62 @@ function CategoryChart({ data, total, currency }: any) {
 }
 
 function BalancesCard({ balances, members, currency }: any) {
+  const settlements = settle(balances);
+  const memberById = (id: string) => members.find((m: any) => m.userId === id)?.user;
+
   return (
     <div className="card p-5">
-      <h3 className="font-display font-bold mb-4">Balances</h3>
-      <div className="space-y-3">
+      <h3 className="font-display font-bold mb-1">Balances</h3>
+      <p className="text-xs text-ink-muted mb-4">Estado de cada viajero</p>
+      <div className="space-y-2">
         {balances.map((b: any) => {
           const user = members.find((m: any) => m.userId === b.userId)?.user;
           if (!user) return null;
           return (
-            <div key={b.userId} className="flex items-center gap-3">
-              <Avatar user={user} size={28} />
-              <div className="flex-1 text-sm font-medium truncate">{user.name?.split(' ')[0]}</div>
-              <div className="text-right">
-                <div className={`font-display font-bold text-sm ${b.amount > 0 ? 'text-mint' : b.amount < 0 ? 'text-coral' : 'text-ink-muted'}`}>
-                  {b.amount > 0 ? '+' : ''}{fmt.money(b.amount, currency)}
+            <div key={b.userId} className="flex items-center gap-3 p-2.5 rounded-xl bg-surface-soft dark:bg-surface-dark-soft">
+              <Avatar user={user} size={30} />
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold truncate">{user.name?.split(' ')[0]}</div>
+                <div className={`text-[10px] font-bold uppercase tracking-wide ${b.amount > 0 ? 'text-mint' : b.amount < 0 ? 'text-coral' : 'text-ink-muted'}`}>
+                  {b.amount > 0 ? 'Le deben' : b.amount < 0 ? 'Debe pagar' : 'Al día'}
                 </div>
-                <div className={`text-[10px] font-semibold ${b.amount > 0 ? 'text-mint' : b.amount < 0 ? 'text-coral' : 'text-ink-muted'}`}>
-                  {b.amount > 0 ? 'te deben' : b.amount < 0 ? 'debes pagar' : 'Al día'}
-                </div>
+              </div>
+              <div className={`font-display font-bold text-sm flex-shrink-0 ${b.amount > 0 ? 'text-mint' : b.amount < 0 ? 'text-coral' : 'text-ink-muted'}`}>
+                {b.amount > 0 ? '+' : ''}{fmt.money(b.amount, currency)}
               </div>
             </div>
           );
         })}
+      </div>
+
+      <div className="mt-4 pt-4 border-t border-bg-alt dark:border-ink-soft/15">
+        <div className="text-xs font-semibold uppercase tracking-wider text-ink-muted mb-3">Quién le paga a quién</div>
+        {settlements.length === 0 ? (
+          <div className="text-center text-sm text-mint font-semibold py-2">Todo al día 🎉</div>
+        ) : (
+          <div className="space-y-2">
+            {settlements.map((s, i) => {
+              const from = memberById(s.from);
+              const to = memberById(s.to);
+              return (
+                <div key={i} className="flex items-center gap-2 p-2.5 rounded-xl bg-coral/5 border border-coral/15">
+                  <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                    {from && <Avatar user={from} size={22} />}
+                    <span className="text-xs font-semibold truncate">{from?.name?.split(' ')[0]}</span>
+                  </div>
+                  <div className="text-center px-1 flex-shrink-0">
+                    <div className="font-display font-bold text-xs text-coral">{fmt.money(s.amount, currency)}</div>
+                    <div className="text-[10px] text-ink-muted">→</div>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-1 min-w-0 justify-end">
+                    <span className="text-xs font-semibold truncate">{to?.name?.split(' ')[0]}</span>
+                    {to && <Avatar user={to} size={22} />}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
