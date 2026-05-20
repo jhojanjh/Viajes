@@ -303,6 +303,113 @@ function StatCard({ label, value, sub, progress, color, icon: Icon, accent }: an
 
 // ──────────── GASTOS ────────────
 
+function downloadReport(trip: any, balances: any[], settlements: any[]) {
+  const memberById = (id: string) => trip.members.find((m: any) => m.userId === id)?.user;
+  const total = trip.expenses.reduce((s: number, e: any) => s + e.amount, 0);
+  const date = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  const catLabel = (cat: string) => categories[cat as keyof typeof categories]?.label || cat;
+
+  const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Informe de gastos · ${trip.name}</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Segoe UI',Arial,sans-serif;color:#1a1a1a;padding:48px;max-width:820px;margin:0 auto;font-size:14px}
+    h1{font-size:30px;font-weight:800;margin-bottom:4px}
+    .meta{color:#888;font-size:12px;margin-bottom:36px}
+    .cards{display:flex;gap:14px;margin-bottom:36px;flex-wrap:wrap}
+    .card{flex:1;min-width:140px;background:#f8f8f8;border-radius:12px;padding:16px}
+    .card-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#999;margin-bottom:4px}
+    .card-value{font-size:22px;font-weight:800}
+    h2{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#999;margin:32px 0 12px}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th{text-align:left;padding:8px 10px;background:#f3f3f3;font-weight:600;color:#555}
+    td{padding:10px 10px;border-bottom:1px solid #f0f0f0;vertical-align:top}
+    .tag{display:inline-block;padding:1px 7px;border-radius:20px;font-size:10px;font-weight:600;background:#eee;color:#666;margin-left:4px}
+    .amount{font-weight:700;font-size:14px}
+    .pos{color:#2BB089}.neg{color:#FF6B47}
+    .settle{display:flex;align-items:center;gap:10px;background:#fff5f3;border:1px solid #ffd5ca;border-radius:8px;padding:10px 14px;margin-bottom:8px}
+    .settle strong{font-size:14px}
+    .arrow{color:#aaa;font-size:16px}
+    .settle-amt{font-weight:800;color:#FF6B47;font-size:15px}
+    .ok{color:#2BB089;font-weight:600;font-size:14px;padding:10px 0}
+    footer{margin-top:48px;padding-top:14px;border-top:1px solid #eee;font-size:11px;color:#bbb;text-align:center}
+    @media print{body{padding:20px}}
+  </style>
+</head>
+<body>
+  <h1>${trip.emoji} ${trip.name}</h1>
+  <div class="meta">Informe de gastos &middot; Generado el ${date}</div>
+
+  <div class="cards">
+    <div class="card"><div class="card-label">Total gastado</div><div class="card-value">${fmt.money(total, trip.baseCurrency)}</div></div>
+    <div class="card"><div class="card-label">Transacciones</div><div class="card-value">${trip.expenses.length}</div></div>
+    <div class="card"><div class="card-label">Viajeros</div><div class="card-value">${trip.members.length}</div></div>
+    ${trip.budget ? `<div class="card"><div class="card-label">Presupuesto</div><div class="card-value">${fmt.money(trip.budget, trip.baseCurrency)}</div></div>` : ''}
+  </div>
+
+  <h2>Gastos detallados</h2>
+  <table>
+    <thead><tr><th>Descripción</th><th>Fecha</th><th>Pagó</th><th>Dividido entre</th><th style="text-align:right">Monto</th></tr></thead>
+    <tbody>
+      ${trip.expenses.map((e: any) => `
+        <tr>
+          <td><strong>${e.title}</strong><span class="tag">${catLabel(e.category)}</span></td>
+          <td style="white-space:nowrap">${fmt.dateShort(e.occurredAt)}</td>
+          <td>${e.payer.name ?? '—'}</td>
+          <td>${e.shares.map((s: any) => memberById(s.userId)?.name?.split(' ')[0] ?? '?').filter(Boolean).join(', ')}</td>
+          <td style="text-align:right" class="amount">${fmt.money(e.amount, e.currency)}</td>
+        </tr>`).join('')}
+    </tbody>
+  </table>
+
+  <h2>Balances por persona</h2>
+  <table>
+    <thead><tr><th>Viajero</th><th style="text-align:right">Balance</th><th>Estado</th></tr></thead>
+    <tbody>
+      ${balances.map((b: any) => {
+        const user = memberById(b.userId);
+        const cls = b.amount > 0 ? 'pos' : b.amount < 0 ? 'neg' : '';
+        const label = b.amount > 0 ? 'Le deben' : b.amount < 0 ? 'Debe pagar' : 'Al día ✓';
+        return `<tr>
+          <td>${user?.name ?? b.userId}</td>
+          <td style="text-align:right" class="amount ${cls}">${b.amount > 0 ? '+' : ''}${fmt.money(b.amount, trip.baseCurrency)}</td>
+          <td class="${cls}">${label}</td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>
+
+  <h2>Pagos sugeridos para liquidar</h2>
+  ${settlements.length === 0
+    ? '<div class="ok">¡Todo al día! No hay pagos pendientes 🎉</div>'
+    : settlements.map((s: any) => {
+        const from = memberById(s.from);
+        const to = memberById(s.to);
+        return `<div class="settle">
+          <strong>${from?.name ?? '?'}</strong>
+          <span class="arrow">→</span>
+          <span class="settle-amt">${fmt.money(s.amount, trip.baseCurrency)}</span>
+          <span class="arrow">→</span>
+          <strong>${to?.name ?? '?'}</strong>
+        </div>`;
+      }).join('')}
+
+  <footer>Generado con Viajesito ❤️</footer>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank');
+  if (!win) return;
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(() => win.print(), 400);
+}
+
 function GastosTab({ trip, currentUserId, onChange }: any) {
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -335,9 +442,17 @@ function GastosTab({ trip, currentUserId, onChange }: any) {
           <div className="font-display text-2xl font-bold">{fmt.money(total, trip.baseCurrency)} <span className="text-sm text-ink-muted font-sans font-normal">total</span></div>
           <div className="text-xs text-ink-muted">{trip.expenses.length} transacciones</div>
         </div>
-        <button onClick={() => setModalOpen(true)} className="btn-coral flex items-center gap-2">
-          <Plus size={15} strokeWidth={2.5} /> Agregar gasto
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => downloadReport(trip, balances, settle(balances))}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-surface dark:bg-surface-dark border border-bg-alt dark:border-ink-soft/20 hover:bg-bg-alt dark:hover:bg-bg-dark-alt transition"
+          >
+            <Download size={15} /> Descargar informe
+          </button>
+          <button onClick={() => setModalOpen(true)} className="btn-coral flex items-center gap-2">
+            <Plus size={15} strokeWidth={2.5} /> Agregar gasto
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
